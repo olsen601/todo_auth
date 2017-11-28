@@ -13,7 +13,7 @@ var passportConfig = require('./config/passport')(passport);
 var hbs = require('hbs');
 var helpers = require('./hbshelpers/helpers');
 
-var db_url = process.env.MONGO_URL;
+var db_url = process.env.MONGO_URL7;
 
 mongoose.Promise = global.Promise;
 mongoose.connect(db_url, {useMongoClient: true })
