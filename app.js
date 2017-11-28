@@ -6,18 +6,29 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var flash = require('express-flash');
 var session = require('express-session');
-
-var MongoClient = require('mongodb').MongoClient;
+var mongoose = require('mongoose');
+var MongoDBStore = require('connect-mongodb-session')(session);
+var passport = require('passport');
+var passportConfig = require('./config/passport')(passport);
+var hbs = require('hbs');
+var helpers = require('./hbshelpers/helpers');
 
 var db_url = process.env.MONGO_URL;
 
-var index = require('./routes/index');
+mongoose.Promise = global.Promise;
+mongoose.connect(db_url, {useMongoClient: true })
+  .then( () => { console.log('Connected to MongoDB') } )
+  .catch( (err) => { console.log('Error Connecting to MongoDB', err); });
+
+var tasks = require('./routes/tasks');
+var auth = require('./routes/auth');
 
 var app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
+hbs.registerHelper(helpers);
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -26,45 +37,46 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-app.use(session( {secret: 'top secret', resave : false, saveUninitialized: false }));
+var store = MongoDBStore( { uri: db_url, collection: 'tasks_sessions'} );
+
+app.use(session( {
+  secret: 'top secret',
+  resave : true,
+  saveUninitialized: true,
+  store: store
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use(flash());
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-MongoClient.connect(db_url).then( (db) => {
-/* => {} is a promise that resloves in a database call since it may take
-a while to connect similar to function(err, db){error handler code}*/
+app.use('/auth', auth);
 
-  var tasks = db.collection('tasks');
+app.use('/', tasks);
 
-  app.use('/', function(req, res, next) {
-    req.tasks = tasks;
-    next();
-  });
+// catch 404 and forward to error handler
+app.use(function(req, res, next) {
+  var err = new Error('Not Found');
+  err.status = 404;
+  next(err);
+});
 
-  app.use('/', index);
+// error handler
+app.use(function(err, req, res, next) {
+  // set locals, only providing error in development
+  res.locals.message = err.message;
+  res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // catch 404 and forward to error handler
-  app.use(function(req, res, next) {
-    var err = new Error('Not Found');
+  if (err.kind === 'ObjectId' && err.name === 'CastError') {
     err.status = 404;
-    next(err);
-  });
+  }
 
-  // error handler
-  app.use(function(err, req, res, next) {
-    // set locals, only providing error in development
-    res.locals.message = err.message;
-    res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-    // render the error page
-    res.status(err.status || 500);
-    res.render('error');
-  });
-
-}).catch((err) => {
-  console.log('Error connecting to MongoDB', err);
-  process.exit(-1);
+  // render the error page
+  res.status(err.status || 500);
+  res.render('error');
 });
 
 module.exports = app;

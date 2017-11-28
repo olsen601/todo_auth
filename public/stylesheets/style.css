@@ -1,16 +1,15 @@
 body {
   padding: 50px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
-  background-color: lightGray;
+  background-color: white;
 }
 
 a {
-  color: yellow;
+  color: black;
   text-decoration: none;
   padding-left: 5px;
   padding-right: 5px;
-  background-color: black;
-  border-radius: 10%;
+  background-color: lightBlue;
 }
 
 .error_msg {
@@ -35,20 +34,21 @@ a {
 
 .done_button {
   background-color: lightGreen;
-  border-radius: 10%;
 }
 
 .delete_button {
   background-color: crimson;
   color: white;
-  border-radius: 10%;
 }
 
 .all_done_button{
-  background-color: black;
-  color: white;
+  background-color: lightGreen;
   font-weight:bold;
-  border-radius: 10%;
+}
+
+.delete_all_button{
+  background-color: crimson;
+  color: white;
 }
 
 .alldone {
