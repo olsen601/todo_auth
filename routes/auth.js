@@ -7,6 +7,11 @@ router.get('/', function(req, res, next){
   res.render('authentication');
 });
 
+/* GET logout */
+router.get('/logout', function(req, res, next){
+  req.logout();  // passport provides this
+  res.redirect('/');
+});
 
 /* POST to login */
 router.post('/login', passport.authenticate('local-login', {
@@ -22,11 +27,5 @@ router.post('/signup', passport.authenticate('local-signup', {
   failureRedirect: '/auth',
   failureFlash: true //show message
 }))
-
-/* GET logout */
-router.get('/logout', function(req, res, next){
-  req.logout();  // passport provides this
-  res.redirect('/');
-});
 
 module.exports = router;
